@@ -38,18 +38,18 @@ print(liste_masque_image_train.shape)
 
  #On change l'espace de couleur de RGB à Lab
 
-def RGB_to_Lab(t_RGB):
-    t_lab = [0] * t_RGB.shape[0]
-    for i, img in enumerate(t_RGB):
-        t_lab[i] = cv.cvtColor(img, cv.COLOR_RGB2LAB)
-    return np.array(t_lab)
+def convertion_RGB_LAB(liste_RGB):
+    liste_lab = [0] * liste_RGB.shape[0]
+    for i, img in enumerate(liste_RGB):
+        liste_lab[i] = cv.cvtColor(img, cv.COLOR_RGB2LAB)
+    return np.array(liste_lab)
 
-t_liste_images_lab = RGB_to_Lab(liste_image_train)
-l_channel,a_channel,b_channel = cv.split(t_liste_images_lab[13])
+liste_image_lab = convertion_RGB_LAB(liste_image_train)
+l_channel,a_channel,b_channel = cv.split(liste_image_lab[13])
 
 # On convertie l'intervalle dans lequel les pixels prennent leurs valeurs pour les dimensions a et b
-ECHELLE = 128
-def convertLab8toLabx(t_img):
+ECHELLE = 132
+def reduire_dimention_lab(t_img):
     temp = [0] * 256
     for i in range(256):
         temp[i] = floor(i / (256/ECHELLE))
@@ -66,19 +66,19 @@ def convertLab8toLabx(t_img):
         t_img[index] = image
         
     return t_img
-img_lab_convert = convertLab8toLabx(t_liste_images_lab)
+img_lab_convert = reduire_dimention_lab(liste_image_lab)
 
 l_channel,a_channel,b_channel = cv.split(img_lab_convert[13])
 
 SEUIL = 100
 # fonction pour calculer l'histogramme peau
 
-def HistogrammePeau(t_images_lab, t_masque):
+def histogram_peau(liste_image_lab, liste_masque):
     z = np.zeros((ECHELLE, ECHELLE))
     
-    for index, img in enumerate(t_images_lab):
+    for index, img in enumerate(liste_image_lab):
         l_channel, a_channel, b_channel = cv.split(img)
-        masque = t_masque[index]
+        masque = liste_masque[index]
     
         x, y = a_channel.shape
         
@@ -93,12 +93,12 @@ def HistogrammePeau(t_images_lab, t_masque):
 
 # fonction pour calculer l'histogramme non peau
 
-def HistogrammeNonPeau(t_images_lab, t_masque):
+def histogram_non_peau(liste_image_lab, liste_masque):
     z = np.zeros((ECHELLE, ECHELLE))
     
-    for index, img in enumerate(t_images_lab):
+    for index, img in enumerate(liste_image_lab):
         l_channel, a_channel, b_channel = cv.split(img)
-        masque = t_masque[index]
+        masque = liste_masque[index]
     
         x, y = a_channel.shape
         
@@ -116,8 +116,8 @@ y = np.linspace(0, ECHELLE-1, ECHELLE)
 
 X, Y = np.meshgrid(x, y)
 
-Z_peau, total_peau = HistogrammePeau(img_lab_convert, liste_masque_image_train)
-Z_non_peau, total_non_peau = HistogrammeNonPeau(img_lab_convert, liste_masque_image_train)
+Z_peau, total_peau = histogram_peau(img_lab_convert, liste_masque_image_train)
+Z_non_peau, total_non_peau = histogram_non_peau(img_lab_convert, liste_masque_image_train)
 
 # detection peau et non peau avec la methode de bayes
 
@@ -202,14 +202,10 @@ plt.title('image RGB {}'.format(i))
 plt.axis("off")
 
 ax = plt.subplot(4, 4, 2)
-plt.imshow(t_liste_images_lab[i])
+plt.imshow(liste_image_lab[i])
 plt.title('image Lab {}'.format(i))
 plt.axis("off")
 
-ax = plt.subplot(4, 4, 3)
-plt.imshow(liste_masque_image_train[i], cmap='gray')
-plt.title('masque {}'.format(i))
-plt.axis("off")
 
 # affichage de l'image dans l'espace de couleur LAB avec les channels A et B uniquement
 i = 50
@@ -218,13 +214,6 @@ ax = plt.subplot(4, 4, 1)
 plt.imshow(img_lab_convert[i])
 plt.title('image {}'.format(i))
 plt.axis("off")
-
-ax = plt.subplot(4, 4, 2)
-plt.imshow(liste_masque_image_train[i], cmap='gray')
-plt.title('image {}'.format(i))
-plt.axis("off")
-
-
 
 #affichage de l'histogramme peau
 fig = plt.figure(figsize=(10, 10))
